@@ -3,40 +3,53 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import Sidebar from "./components/Sidebar";
-import Dashboard from "./components/Dashboard"; // Asegúrate de tener este componente
+import Dashboard from "./components/Dashboard";
+import Usuarios from "./components/Usuarios";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(localStorage.getItem("role"));
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role"); // Guardar el rol en el localStorage
-    if (storedRole) setUserRole(storedRole);
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    setIsAuthenticated(!!token);
+    setUserRole(role);
   }, []);
 
   const handleLoginSuccess = (role) => {
-    localStorage.setItem("role", role); // Guardar el rol después de iniciar sesión
+    localStorage.setItem("role", role);
     setIsAuthenticated(true);
     setUserRole(role);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Eliminar el token
-    localStorage.removeItem("role"); // Eliminar el rol
-    setIsAuthenticated(false); // Cambiar el estado de autenticación
-    setUserRole(null); // Eliminar el rol del estado
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    setIsAuthenticated(false);
+    setUserRole(null);
   };
 
   return (
     <Router>
       <div style={{ display: "flex" }}>
         {isAuthenticated && userRole && <Sidebar onLogout={handleLogout} />}
-        <div style={{ marginLeft: isAuthenticated ? 240 : 0, padding: 20, flexGrow: 1 }}>
+        <div
+          style={{
+            marginLeft: isAuthenticated ? 260 : 0, // Ajusta según el Sidebar
+            padding: 20,
+            flexGrow: 1,
+          }}
+        >
           <Routes>
             <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
             <Route
               path="/dashboard"
               element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/usuarios"
+              element={isAuthenticated ? <Usuarios /> : <Navigate to="/login" />}
             />
             <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
           </Routes>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Importar useNavigate
+import { useNavigate, Link } from "react-router-dom"; 
 import {
   Drawer,
   List,
@@ -23,7 +23,8 @@ const iconos = {
 
 const Sidebar = ({ onLogout }) => {
   const [modulos, setModulos] = useState([]);
-  const navigate = useNavigate(); // Hook para redirección
+  const navigate = useNavigate();
+  const userRole = localStorage.getItem("role"); // Obtener el rol del usuario
 
   useEffect(() => {
     const fetchModulos = async () => {
@@ -44,8 +45,8 @@ const Sidebar = ({ onLogout }) => {
   }, []);
 
   const handleLogout = () => {
-    onLogout(); // Limpiar autenticación
-    navigate("/login"); // Redirigir al login
+    onLogout();
+    navigate("/login");
   };
 
   return (
@@ -56,7 +57,7 @@ const Sidebar = ({ onLogout }) => {
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between", // Asegura que el botón quede abajo
+        justifyContent: "space-between",
         [`& .MuiDrawer-paper`]: {
           width: 260,
           boxSizing: "border-box",
@@ -81,10 +82,13 @@ const Sidebar = ({ onLogout }) => {
           La Casa de los Pasteles
         </Typography>
         <Divider sx={{ backgroundColor: "white", marginBottom: 2 }} />
+
         <List>
           {modulos.map((modulo) => (
             <ListItemButton
               key={modulo.id_modulo}
+              component={Link}
+              to={`/${modulo.nombre.toLowerCase()}`}
               sx={{
                 borderRadius: 3,
                 marginY: 1,
@@ -106,9 +110,37 @@ const Sidebar = ({ onLogout }) => {
               />
             </ListItemButton>
           ))}
+
+          {/* Botón de Gestión de Usuarios (Solo para Admins) */}
+          {userRole === "admin" && (
+            <ListItemButton
+              component={Link}
+              to="/usuarios"
+              sx={{
+                borderRadius: 3,
+                marginY: 1,
+                paddingY: 1.5,
+                transition: "0.3s",
+                backgroundColor: "rgba(255,255,255,0.2)",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.4)" },
+              }}
+            >
+              <ListItemIcon sx={{ color: "white" }}>
+                <People />
+              </ListItemIcon>
+              <ListItemText
+                primary="Gestión de Usuarios"
+                sx={{
+                  color: "white",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: "bold",
+                }}
+              />
+            </ListItemButton>
+          )}
         </List>
       </div>
-      
+
       {/* Botón de Cerrar Sesión */}
       <Button
         variant="contained"
@@ -116,7 +148,7 @@ const Sidebar = ({ onLogout }) => {
         startIcon={<ExitToApp />}
         onClick={handleLogout}
         sx={{
-          marginTop: "auto", 
+          marginTop: "auto",
           borderRadius: 3,
           backgroundColor: "#B22222",
           "&:hover": { backgroundColor: "#8B0000" },
