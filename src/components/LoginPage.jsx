@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { TextField, Button, Card, CardContent, Typography } from "@mui/material";
 import { Box } from "@mui/system";
+import { useNavigate } from "react-router-dom"; // Importa useNavigate
 
 const LoginPage = ({ onLoginSuccess }) => {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate(); // Inicializa el hook useNavigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
       const response = await fetch("http://127.0.0.1:5000/login", {
         method: "POST",
@@ -20,16 +22,34 @@ const LoginPage = ({ onLoginSuccess }) => {
           contrasena: password,
         }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         console.log("Login exitoso:", data.message);
-        if (typeof onLoginSuccess === "function") {
-          onLoginSuccess(); // Aseguramos que sea una función antes de llamarla
-        } else {
-          console.error("La prop onLoginSuccess no es una función válida.");
-        }
+        
+        // Guardamos el token en localStorage
+        localStorage.setItem("token", data.token);
+  
+        // Llamamos al endpoint /modulos para obtener el rol y módulos
+        const modulosResponse = await fetch("http://127.0.0.1:5000/modulos", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${data.token}`,
+          },
+        });
+  
+        const modulosData = await modulosResponse.json();
+        console.log("Módulos obtenidos:", modulosData);
+  
+        // Aquí puedes definir la lógica para obtener el rol (si está en el backend)
+        const userRole = modulosData.length > 3 ? "super_admin" : "cajero"; // Simulación
+        
+        // Llamamos a onLoginSuccess con el rol del usuario
+        onLoginSuccess(userRole);
+
+        // Redirigir al Dashboard después del login exitoso
+        navigate("/dashboard"); // Redirige a la página del dashboard
       } else {
         console.log("Error de login:", data.message);
       }
