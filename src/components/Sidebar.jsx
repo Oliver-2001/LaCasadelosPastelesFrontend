@@ -10,15 +10,18 @@ import {
   Divider,
   Button,
 } from "@mui/material";
-import { Home, ShoppingCart, Inventory, People, BarChart, TrendingUp, ExitToApp } from "@mui/icons-material";
+import { Home, Receipt, ShoppingCart, Inventory, People, BarChart, ExitToApp, LocalMall, Timeline, LocationCity } from "@mui/icons-material";
 
 const iconos = {
   Dashboard: <Home />,
   Ventas: <ShoppingCart />,
+  DetalleVentas: <Receipt />,
+  Productos: <LocalMall />,
   Inventario: <Inventory />,
   Usuarios: <People />,
   Reportes: <BarChart />,
-  Predicciones: <TrendingUp />,
+  Sucursales: <LocationCity />,
+  PrediccionesIA: <Timeline />,
 };
 
 const Sidebar = ({ onLogout }) => {
