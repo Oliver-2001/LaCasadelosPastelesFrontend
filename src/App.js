@@ -5,6 +5,8 @@ import LoginPage from "./components/LoginPage";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import Usuarios from "./components/Usuarios";
+import Productos from "./components/Productos";
+import Inventario from "./components/Inventario";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
@@ -52,6 +54,14 @@ function App() {
               element={isAuthenticated ? <Usuarios /> : <Navigate to="/login" />}
             />
             <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
+            <Route
+              path="/productos"
+              element={isAuthenticated ? <Productos /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/inventario"
+              element={isAuthenticated ? <Inventario /> : <Navigate to="/login" />}
+            />
           </Routes>
         </div>
       </div>

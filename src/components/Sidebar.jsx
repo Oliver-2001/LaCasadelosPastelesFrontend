@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; 
+import { useNavigate, Link } from "react-router-dom";
 import {
   Drawer,
   List,
@@ -10,7 +10,18 @@ import {
   Divider,
   Button,
 } from "@mui/material";
-import { Home, Receipt, ShoppingCart, Inventory, People, BarChart, ExitToApp, LocalMall, Timeline, LocationCity } from "@mui/icons-material";
+import {
+  Home,
+  Receipt,
+  ShoppingCart,
+  Inventory,
+  People,
+  BarChart,
+  ExitToApp,
+  LocalMall,
+  Timeline,
+  LocationCity,
+} from "@mui/icons-material";
 
 const iconos = {
   Dashboard: <Home />,
@@ -27,7 +38,7 @@ const iconos = {
 const Sidebar = ({ onLogout }) => {
   const [modulos, setModulos] = useState([]);
   const navigate = useNavigate();
-  const userRole = localStorage.getItem("role"); // Obtener el rol del usuario
+  const userRole = localStorage.getItem("role");
 
   useEffect(() => {
     const fetchModulos = async () => {
@@ -38,7 +49,15 @@ const Sidebar = ({ onLogout }) => {
         });
 
         const data = await response.json();
-        setModulos(data);
+        console.log("Módulos obtenidos:", data);
+
+        // Eliminar duplicados por nombre o id_modulo (según el criterio que prefieras)
+        const uniqueModulos = [
+          ...new Map(data.map((item) => [item.id_modulo, item])).values(),
+        ];
+        console.log("Módulos únicos:", uniqueModulos);
+
+        setModulos(uniqueModulos);
       } catch (error) {
         console.error("Error al obtener los módulos:", error);
       }
@@ -87,61 +106,68 @@ const Sidebar = ({ onLogout }) => {
         <Divider sx={{ backgroundColor: "white", marginBottom: 2 }} />
 
         <List>
-          {modulos.map((modulo) => (
-            <ListItemButton
-              key={modulo.id_modulo}
-              component={Link}
-              to={`/${modulo.nombre.toLowerCase()}`}
-              sx={{
-                borderRadius: 3,
-                marginY: 1,
-                paddingY: 1.5,
-                transition: "0.3s",
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.2)" },
-              }}
-            >
-              <ListItemIcon sx={{ color: "white" }}>
-                {iconos[modulo.nombre] || <Home />}
-              </ListItemIcon>
-              <ListItemText
-                primary={modulo.nombre}
+          {/* Módulos obtenidos desde la API */}
+          {modulos.length > 0 ? (
+            modulos.map((modulo) => (
+              <ListItemButton
+                key={modulo.id_modulo}
+                component={Link}
+                to={`/${modulo.nombre.toLowerCase()}`}
                 sx={{
-                  color: "white",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: "bold",
+                  borderRadius: 3,
+                  marginY: 1,
+                  paddingY: 1.5,
+                  transition: "0.3s",
+                  "&:hover": { backgroundColor: "rgba(255,255,255,0.2)" },
                 }}
-              />
-            </ListItemButton>
-          ))}
-
-          {/* Botón de Gestión de Usuarios (Solo para Admins) */}
-          {userRole === "admin" && (
-            <ListItemButton
-              component={Link}
-              to="/usuarios"
-              sx={{
-                borderRadius: 3,
-                marginY: 1,
-                paddingY: 1.5,
-                transition: "0.3s",
-                backgroundColor: "rgba(255,255,255,0.2)",
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.4)" },
-              }}
-            >
-              <ListItemIcon sx={{ color: "white" }}>
-                <People />
-              </ListItemIcon>
-              <ListItemText
-                primary="Gestión de Usuarios"
-                sx={{
-                  color: "white",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: "bold",
-                }}
-              />
-            </ListItemButton>
+              >
+                <ListItemIcon sx={{ color: "white" }}>
+                  {iconos[modulo.nombre] || <Home />}
+                </ListItemIcon>
+                <ListItemText
+                  primary={modulo.nombre}
+                  sx={{
+                    color: "white",
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: "bold",
+                  }}
+                />
+              </ListItemButton>
+            ))
+          ) : (
+            <Typography sx={{ color: "white", textAlign: "center" }}>
+              No hay módulos disponibles
+            </Typography>
           )}
         </List>
+
+        {/* Botón de Gestión de Usuarios (Solo para Admins o Superadmins) */}
+        {(userRole === "admin" || userRole === "superadmin") && (
+          <ListItemButton
+            component={Link}
+            to="/usuarios"
+            sx={{
+              borderRadius: 3,
+              marginY: 1,
+              paddingY: 1.5,
+              transition: "0.3s",
+              backgroundColor: "rgba(255,255,255,0.2)",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.4)" },
+            }}
+          >
+            <ListItemIcon sx={{ color: "white" }}>
+              <People />
+            </ListItemIcon>
+            <ListItemText
+              primary="Gestión de Usuarios"
+              sx={{
+                color: "white",
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: "bold",
+              }}
+            />
+          </ListItemButton>
+        )}
       </div>
 
       {/* Botón de Cerrar Sesión */}
