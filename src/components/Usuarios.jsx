@@ -144,14 +144,14 @@ const Usuarios = () => {
       >
         Crear Usuario
       </Button>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ boxShadow: 4, borderRadius: 3 }}>
         <Table>
-          <TableHead>
+          <TableHead sx={{ backgroundColor: "#ff9800" }}>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Usuario</TableCell>
-              <TableCell>Rol</TableCell>
-              <TableCell>Acciones</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Nombre</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Usuario</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Rol</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
