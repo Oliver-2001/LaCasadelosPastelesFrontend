@@ -1,139 +1,186 @@
-import React, { useEffect, useState } from "react";
-import { 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, 
-  Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField 
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
+import React, { useEffect, useState } from 'react';
+import { Button, Modal, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from '@mui/material';
 
 const Inventario = () => {
   const [inventario, setInventario] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [openEdit, setOpenEdit] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [newCantidad, setNewCantidad] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editInsumo, setEditInsumo] = useState(null);
+  const [nombre, setNombre] = useState('');
+  const [cantidad, setCantidad] = useState('');
+  const [unidad, setUnidad] = useState('');
+  const [fechaActualizacion, setFechaActualizacion] = useState('');
+  const [idSucursal, setIdSucursal] = useState('');
 
-  useEffect(() => {
-    fetchInventario();
-  }, []);
-
-  const fetchInventario = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    const response = await fetch("http://127.0.0.1:5000/inventario", {
-      headers: { "Authorization": `Bearer ${token}` },
+  // Obtener el inventario
+  const obtenerInventario = async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://127.0.0.1:5000/inventario', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (response.ok) {
       const data = await response.json();
       setInventario(data);
+    } else {
+      console.error('Error al obtener inventario');
     }
   };
 
-  const handleEdit = (item) => {
-    setSelectedItem(item);
-    setNewCantidad(item.cantidad);
-    setOpenEdit(true);
-  };
-
-  const handleUpdateCantidad = async () => {
-    if (!selectedItem) return;
-
-    const response = await fetch(`http://127.0.0.1:5000/inventario/${selectedItem.id_insumo}`, {
-      method: "PUT",
+  // Eliminar insumo
+  const handleDelete = async (idInsumo) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://127.0.0.1:5000/inventario/${idInsumo}`, {
+      method: 'DELETE',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ cantidad: newCantidad }),
     });
 
     if (response.ok) {
-      fetchInventario();
-      setOpenEdit(false);
+      setInventario(inventario.filter(insumo => insumo.id_insumo !== idInsumo));
+      alert('Insumo eliminado');
+    } else {
+      console.error('Error al eliminar insumo');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de eliminar este insumo?")) {
-      await fetch(`http://127.0.0.1:5000/inventario/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
-      });
-      fetchInventario();
+  // Editar insumo
+  const handleEdit = async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://127.0.0.1:5000/inventario/${editInsumo.id_insumo}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        nombre,
+        cantidad,
+        unidad,
+        fecha_actualizacion: fechaActualizacion,
+        id_sucursal: idSucursal,
+      }),
+    });
+
+    if (response.ok) {
+      // Obtener el inventario actualizado
+      obtenerInventario();
+      setModalOpen(false); // Cerrar el modal
+      alert('Insumo editado');
+    } else {
+      console.error('Error al editar insumo');
     }
   };
+
+  // Abrir el modal para editar
+  const abrirModalEditar = (insumo) => {
+    setEditInsumo(insumo);
+    setNombre(insumo.nombre);
+    setCantidad(insumo.cantidad);
+    setUnidad(insumo.unidad);
+    setFechaActualizacion(insumo.fecha_actualizacion);
+    setIdSucursal(insumo.id_sucursal);
+    setModalOpen(true);
+  };
+
+  // Cerrar el modal de edición
+  const cerrarModal = () => {
+    setModalOpen(false);
+  };
+
+  // Obtener el inventario al cargar el componente
+  useEffect(() => {
+    obtenerInventario();
+  }, []);
 
   return (
-    <div style={{ width: "90%", margin: "auto", marginTop: "20px" }}>
-      <Button variant="contained" color="warning" startIcon={<AddIcon />} sx={{ mb: 2 }}>
-        Crear Insumo
-      </Button>
-
-      <TableContainer component={Paper} sx={{ boxShadow: 4, borderRadius: 3 }}>
+    <div>
+      <TableContainer component={Paper} sx={{ border: '2px solid #FF5722' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: "#ff9800" }}>
+          <TableHead sx={{ backgroundColor: '#FF5722' }}>
             <TableRow>
-              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>ID</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Nombre</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Cantidad</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Unidad</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Última actualización</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold", fontSize: "1.1rem" }}>Acciones</TableCell>
+              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Nombre</TableCell>
+              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Cantidad</TableCell>
+              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Unidad</TableCell>
+              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Fecha de Actualización</TableCell>
+              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {inventario.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item) => (
-              <TableRow key={item.id_insumo}>
-                <TableCell>{item.id_insumo}</TableCell>
-                <TableCell>{item.nombre}</TableCell>
-                <TableCell>{item.cantidad}</TableCell>
-                <TableCell>{item.unidad}</TableCell>
-                <TableCell>{new Date(item.fecha_actualizacion).toLocaleDateString()}</TableCell>
+            {inventario.map((insumo) => (
+              <TableRow key={insumo.id_insumo}>
+                <TableCell>{insumo.nombre}</TableCell>
+                <TableCell>{insumo.cantidad}</TableCell>
+                <TableCell>{insumo.unidad}</TableCell>
+                <TableCell>{new Date(insumo.fecha_actualizacion).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Button color="primary" size="small" startIcon={<EditIcon />} onClick={() => handleEdit(item)}>
-                    Editar
-                  </Button>
-                  <Button color="error" size="small" startIcon={<DeleteIcon />} onClick={() => handleDelete(item.id_insumo)}>
-                    Eliminar
-                  </Button>
+                  <Button onClick={() => abrirModalEditar(insumo)} color="primary">Editar</Button>
+                  <Button onClick={() => handleDelete(insumo.id_insumo)} color="secondary">Eliminar</Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        <TablePagination
-          component="div"
-          count={inventario.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={(event, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
-        />
       </TableContainer>
 
-      {/* Modal para editar cantidad */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)}>
-        <DialogTitle>Editar Cantidad</DialogTitle>
-        <DialogContent>
+      {/* Modal de Edición */}
+      <Modal open={modalOpen} onClose={cerrarModal}>
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', padding: 4 }}>
+          <h2>Editar Insumo</h2>
+          <TextField
+            label="Nombre"
+            fullWidth
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            margin="normal"
+          />
           <TextField
             label="Cantidad"
-            type="number"
             fullWidth
-            variant="outlined"
-            value={newCantidad}
-            onChange={(e) => setNewCantidad(e.target.value)}
-            sx={{ mt: 2 }}
+            value={cantidad}
+            onChange={(e) => setCantidad(e.target.value)}
+            margin="normal"
+            type="number"
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEdit(false)}>Cancelar</Button>
-          <Button onClick={handleUpdateCantidad} color="primary">Guardar</Button>
-        </DialogActions>
-      </Dialog>
+          <TextField
+            label="Unidad"
+            fullWidth
+            value={unidad}
+            onChange={(e) => setUnidad(e.target.value)}
+            margin="normal"
+          />
+          <TextField
+            label="Fecha de Actualización"
+            fullWidth
+            value={fechaActualizacion}
+            onChange={(e) => setFechaActualizacion(e.target.value)}
+            margin="normal"
+            type="date"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+          <TextField
+            label="ID de Sucursal"
+            fullWidth
+            value={idSucursal}
+            onChange={(e) => setIdSucursal(e.target.value)}
+            margin="normal"
+            type="number"
+          />
+          <Button onClick={handleEdit} color="primary" fullWidth>
+            Guardar cambios
+          </Button>
+          <Button onClick={cerrarModal} color="secondary" fullWidth>
+            Cancelar
+          </Button>
+        </Box>
+      </Modal>
     </div>
   );
 };
