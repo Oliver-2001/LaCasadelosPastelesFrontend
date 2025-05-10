@@ -18,16 +18,18 @@ import {
   FormControl,
   CircularProgress,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 
 const Usuarios = () => {
-  const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
+  const [openModalEditar, setOpenModalEditar] = useState(false);
+  const [openModalCrear, setOpenModalCrear] = useState(false);
   const [usuarioEditar, setUsuarioEditar] = useState(null);
-  const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevoUsuario, setNuevoUsuario] = useState("");
-  const [nuevoRol, setNuevoRol] = useState("");
+
+  const [nombre, setNombre] = useState("");
+  const [usuario, setUsuario] = useState("");
+  const [rol, setRol] = useState(""); // Correcto para editar y crear
+  const [password, setPassword] = useState(""); // Solo para crear
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -40,7 +42,6 @@ const Usuarios = () => {
       const response = await fetch("http://127.0.0.1:5000/usuarios", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (response.ok) {
         const data = await response.json();
         setUsuarios(data);
@@ -53,8 +54,7 @@ const Usuarios = () => {
   };
 
   const eliminarUsuario = async (id_usuario) => {
-    const confirmacion = window.confirm("¿Seguro que deseas eliminar este usuario?");
-    if (!confirmacion) return;
+    if (!window.confirm("¿Seguro que deseas eliminar este usuario?")) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -68,37 +68,32 @@ const Usuarios = () => {
 
       const data = await response.json();
       alert(data.message);
-
-      if (response.ok) {
-        // Actualizar la lista de usuarios después de eliminar
-        fetchUsuarios();
-      }
+      if (response.ok) fetchUsuarios();
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
     }
   };
 
-  const abrirModalEditar = (usuario) => {
-    setNuevoNombre(usuario.nombre);
-    setNuevoUsuario(usuario.usuario);
-    setNuevoRol(usuario.id_rol);
-    setUsuarioEditar(usuario);
-    setOpenModal(true);
+  const abrirModalEditar = (usuarioData) => {
+    setNombre(usuarioData.nombre);
+    setUsuario(usuarioData.usuario);
+    setRol(usuarioData.id_rol); // Aquí asignamos correctamente el rol
+    setUsuarioEditar(usuarioData);
+    setOpenModalEditar(true);
   };
 
   const cerrarModal = () => {
-    setOpenModal(false);
-    setNuevoNombre("");
-    setNuevoUsuario("");
-    setNuevoRol("");
+    setOpenModalEditar(false);
+    setOpenModalCrear(false);
+    setNombre("");
+    setUsuario("");
+    setPassword("");
+    setRol("");
     setUsuarioEditar(null);
   };
 
   const editarUsuario = async () => {
-    if (!nuevoNombre || !nuevoUsuario || !nuevoRol) {
-      alert("Todos los campos son obligatorios.");
-      return;
-    }
+    if (!nombre || !usuario || !rol) return alert("Todos los campos son obligatorios.");
 
     try {
       setLoading(true);
@@ -110,22 +105,57 @@ const Usuarios = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          nombre: nuevoNombre,
-          usuario: nuevoUsuario,
-          id_rol: parseInt(nuevoRol),
+          nombre,
+          usuario,
+          id_rol: parseInt(rol),
         }),
       });
 
       if (response.ok) {
         alert("Usuario actualizado correctamente.");
-        fetchUsuarios(); // Actualizamos la lista después de editar
-        cerrarModal(); // Cerramos el modal
+        fetchUsuarios();
+        cerrarModal();
       } else {
         const data = await response.json();
         alert(data.message || "Error al actualizar usuario.");
       }
     } catch (error) {
-      console.error("Error en la solicitud:", error);
+      console.error("Error al editar:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const crearUsuario = async () => {
+    if (!nombre || !usuario || !password || !rol) return alert("Todos los campos son obligatorios.");
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://127.0.0.1:5000/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombre,
+          usuario,
+          contrasena: password,
+          id_rol: parseInt(rol),
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert("Usuario creado correctamente.");
+        fetchUsuarios();
+        cerrarModal();
+      } else {
+        alert(data.message || "Error al crear usuario.");
+      }
+    } catch (error) {
+      console.error("Error al crear usuario:", error);
     } finally {
       setLoading(false);
     }
@@ -140,10 +170,11 @@ const Usuarios = () => {
         variant="contained"
         color="primary"
         sx={{ mb: 2 }}
-        onClick={() => navigate("/usuarios/nuevo")}
+        onClick={() => setOpenModalCrear(true)}
       >
         Crear Usuario
       </Button>
+
       <TableContainer component={Paper} sx={{ boxShadow: 4, borderRadius: 3 }}>
         <Table>
           <TableHead sx={{ backgroundColor: "#ff9800" }}>
@@ -169,19 +200,10 @@ const Usuarios = () => {
                     : "Panadero"}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    sx={{ mr: 1 }}
-                    onClick={() => abrirModalEditar(usuario)}
-                  >
+                  <Button variant="outlined" color="primary" sx={{ mr: 1 }} onClick={() => abrirModalEditar(usuario)}>
                     Editar
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() => eliminarUsuario(usuario.id_usuario)}
-                  >
+                  <Button variant="outlined" color="secondary" onClick={() => eliminarUsuario(usuario.id_usuario)}>
                     Eliminar
                   </Button>
                 </TableCell>
@@ -191,68 +213,60 @@ const Usuarios = () => {
         </Table>
       </TableContainer>
 
-      {/* Modal para editar usuario */}
-      <Modal
-        open={openModal}
-        onClose={cerrarModal}
-        aria-labelledby="modal-edit-title"
-        aria-describedby="modal-edit-description"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "white",
-            padding: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-            width: 400,
-          }}
-        >
-          <Typography variant="h6" id="modal-edit-title" gutterBottom>
-            Editar Usuario
-          </Typography>
-          <TextField
-            label="Nombre"
-            fullWidth
-            value={nuevoNombre}
-            onChange={(e) => setNuevoNombre(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Usuario"
-            fullWidth
-            value={nuevoUsuario}
-            onChange={(e) => setNuevoUsuario(e.target.value)}
-            sx={{ mb: 2 }}
-          />
+      {/* Modal Editar */}
+      <Modal open={openModalEditar} onClose={cerrarModal}>
+        <Box sx={modalStyle}>
+          <Typography variant="h6" gutterBottom>Editar Usuario</Typography>
+          <TextField label="Nombre" fullWidth value={nombre} onChange={(e) => setNombre(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Usuario" fullWidth value={usuario} onChange={(e) => setUsuario(e.target.value)} sx={{ mb: 2 }} />
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Rol</InputLabel>
-            <Select
-              value={nuevoRol}
-              onChange={(e) => setNuevoRol(e.target.value)}
-              label="Rol"
-            >
+            <Select value={rol} onChange={(e) => setRol(e.target.value)} label="Rol">
               <MenuItem value={2}>Administrador</MenuItem>
               <MenuItem value={3}>Cajero</MenuItem>
               <MenuItem value={4}>Panadero</MenuItem>
             </Select>
           </FormControl>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={editarUsuario}
-            disabled={loading}
-            sx={{ width: "100%" }}
-          >
+          <Button variant="contained" color="primary" fullWidth onClick={editarUsuario} disabled={loading}>
             {loading ? <CircularProgress size={24} /> : "Actualizar Usuario"}
+          </Button>
+        </Box>
+      </Modal>
+
+      {/* Modal Crear */}
+      <Modal open={openModalCrear} onClose={cerrarModal}>
+        <Box sx={modalStyle}>
+          <Typography variant="h6" gutterBottom>Crear Usuario</Typography>
+          <TextField label="Nombre" fullWidth value={nombre} onChange={(e) => setNombre(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Usuario" fullWidth value={usuario} onChange={(e) => setUsuario(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Contraseña" type="password" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} sx={{ mb: 2 }} />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Rol</InputLabel>
+            <Select value={rol} onChange={(e) => setRol(e.target.value)} label="Rol">
+              <MenuItem value={2}>Administrador</MenuItem>
+              <MenuItem value={3}>Cajero</MenuItem>
+              <MenuItem value={4}>Panadero</MenuItem>
+            </Select>
+          </FormControl>
+          <Button variant="contained" color="primary" fullWidth onClick={crearUsuario} disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : "Crear Usuario"}
           </Button>
         </Box>
       </Modal>
     </div>
   );
+};
+
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  backgroundColor: "white",
+  padding: 4,
+  borderRadius: 2,
+  boxShadow: 24,
+  width: 400,
 };
 
 export default Usuarios;
