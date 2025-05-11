@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from '@mui/material';
+import { Button, Modal, TextField, Table, Typography, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from '@mui/material';
 
 const Inventario = () => {
   const [inventario, setInventario] = useState([]);
@@ -10,6 +10,13 @@ const Inventario = () => {
   const [unidad, setUnidad] = useState('');
   const [fechaActualizacion, setFechaActualizacion] = useState('');
   const [idSucursal, setIdSucursal] = useState('');
+
+  const [crearModalOpen, setCrearModalOpen] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevaCantidad, setNuevaCantidad] = useState('');
+  const [nuevaUnidad, setNuevaUnidad] = useState('');
+  const [nuevoIdSucursal, setNuevoIdSucursal] = useState('');
+
 
   // Obtener el inventario
   const obtenerInventario = async () => {
@@ -98,11 +105,51 @@ const Inventario = () => {
     obtenerInventario();
   }, []);
 
+  // Crear nuevo insumo
+  const handleCrearInsumo = async () => {
+  const token = localStorage.getItem('token');
+  const response = await fetch('http://127.0.0.1:5000/inventario', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      nombre: nuevoNombre,
+      cantidad: nuevaCantidad,
+      unidad: nuevaUnidad,
+      id_sucursal: nuevoIdSucursal,
+    }),
+  });
+
+  if (response.ok) {
+    obtenerInventario(); // Recargar
+    setCrearModalOpen(false);
+    // Limpiar campos
+    setNuevoNombre('');
+    setNuevaCantidad('');
+    setNuevaUnidad('');
+    setNuevoIdSucursal('');
+    alert('Insumo creado exitosamente');
+  } else {
+    const data = await response.json();
+    alert(`Error al crear insumo: ${data.message}`);
+  }
+};
+
+
   return (
-    <div>
-      <TableContainer component={Paper} sx={{ border: '2px solid #FF5722' }}>
+    
+    <div style={{ padding: '20px' }}>
+      <Typography variant="h4" gutterBottom>
+        Gestión de Inventario
+      </Typography>
+      <Button variant="contained" sx={{ my: 2, backgroundColor: '#FF5722' }} onClick={() => setCrearModalOpen(true)}>
+      Agregar Insumo
+      </Button>
+      <TableContainer component={Paper} sx={{ border: '2px solidrgb(74, 34, 255)' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#FF5722' }}>
+          <TableHead sx={{ backgroundColor: '#ff9800' }}>
             <TableRow>
               <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Nombre</TableCell>
               <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Cantidad</TableCell>
@@ -181,6 +228,49 @@ const Inventario = () => {
           </Button>
         </Box>
       </Modal>
+
+      <Modal open={crearModalOpen} onClose={() => setCrearModalOpen(false)}>
+  <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', padding: 4 }}>
+    <h2>Agregar Insumo</h2>
+    <TextField
+      label="Nombre"
+      fullWidth
+      value={nuevoNombre}
+      onChange={(e) => setNuevoNombre(e.target.value)}
+      margin="normal"
+    />
+    <TextField
+      label="Cantidad"
+      fullWidth
+      value={nuevaCantidad}
+      onChange={(e) => setNuevaCantidad(e.target.value)}
+      margin="normal"
+      type="number"
+    />
+    <TextField
+      label="Unidad"
+      fullWidth
+      value={nuevaUnidad}
+      onChange={(e) => setNuevaUnidad(e.target.value)}
+      margin="normal"
+    />
+    <TextField
+      label="ID de Sucursal"
+      fullWidth
+      value={nuevoIdSucursal}
+      onChange={(e) => setNuevoIdSucursal(e.target.value)}
+      margin="normal"
+      type="number"
+    />
+    <Button onClick={handleCrearInsumo} color="primary" fullWidth>
+      Crear Insumo
+    </Button>
+    <Button onClick={() => setCrearModalOpen(false)} color="secondary" fullWidth>
+      Cancelar
+    </Button>
+  </Box>
+</Modal>
+
     </div>
   );
 };

@@ -168,8 +168,7 @@ const Usuarios = () => {
       </Typography>
       <Button
         variant="contained"
-        color="primary"
-        sx={{ mb: 2 }}
+        sx={{ my: 2, backgroundColor: "#FF5722" }}
         onClick={() => setOpenModalCrear(true)}
       >
         Crear Usuario

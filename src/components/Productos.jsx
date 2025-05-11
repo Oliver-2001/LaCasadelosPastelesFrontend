@@ -192,7 +192,7 @@ const Productos = () => {
       {/* 🆕 Botón para abrir modal de creación */}
       <Button
         variant="contained"
-        sx={{ backgroundColor: "#1976d2", mb: 2 }}
+        sx={{ backgroundColor: "#FF5722", mb: 2 }}
         onClick={() => setOpenCrearModal(true)}
       >
         Agregar Producto
