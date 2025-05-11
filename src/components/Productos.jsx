@@ -31,6 +31,15 @@ const Productos = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
 
+  // 🆕 Estado para controlar modal de creación
+  const [openCrearModal, setOpenCrearModal] = useState(false);
+  const [nuevoProducto, setNuevoProducto] = useState({
+    nombre: "",
+    precio: "",
+    stock: "",
+    categoria: "",
+  });
+
   useEffect(() => {
     obtenerProductos();
   }, []);
@@ -133,11 +142,62 @@ const Productos = () => {
     }
   };
 
+  // 🆕 Crear producto
+  const agregarProducto = async () => {
+    const { nombre, precio, stock, categoria } = nuevoProducto;
+    if (!nombre || !precio || !stock || !categoria) {
+      alert("Todos los campos son obligatorios.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://127.0.0.1:5000/productos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombre,
+          precio: parseFloat(precio),
+          stock: parseInt(stock),
+          categoria,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Producto agregado exitosamente.");
+        setNuevoProducto({ nombre: "", precio: "", stock: "", categoria: "" });
+        obtenerProductos();
+        setOpenCrearModal(false);
+      } else {
+        const data = await response.json();
+        alert(data.message || "Error al agregar producto.");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <Typography variant="h4" gutterBottom>
         Gestión de Productos
       </Typography>
+
+      {/* 🆕 Botón para abrir modal de creación */}
+      <Button
+        variant="contained"
+        sx={{ backgroundColor: "#1976d2", mb: 2 }}
+        onClick={() => setOpenCrearModal(true)}
+      >
+        Agregar Producto
+      </Button>
+
       <TableContainer component={Paper} sx={{ boxShadow: 4, borderRadius: 3 }}>
         <Table>
           <TableHead sx={{ backgroundColor: "#ff9800" }}>
@@ -196,43 +256,40 @@ const Productos = () => {
           <Typography variant="h6" gutterBottom>
             Editar Producto
           </Typography>
-          <TextField
-            label="Nombre"
-            fullWidth
-            value={nuevoNombre}
-            onChange={(e) => setNuevoNombre(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Precio"
-            type="number"
-            fullWidth
-            value={nuevoPrecio}
-            onChange={(e) => setNuevoPrecio(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Stock"
-            type="number"
-            fullWidth
-            value={nuevoStock}
-            onChange={(e) => setNuevoStock(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Categoría"
-            fullWidth
-            value={nuevaCategoria}
-            onChange={(e) => setNuevaCategoria(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: "#4caf50", width: "100%" }}
-            onClick={editarProducto}
-            disabled={loading}
-          >
+          <TextField label="Nombre" fullWidth value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Precio" type="number" fullWidth value={nuevoPrecio} onChange={(e) => setNuevoPrecio(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Stock" type="number" fullWidth value={nuevoStock} onChange={(e) => setNuevoStock(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Categoría" fullWidth value={nuevaCategoria} onChange={(e) => setNuevaCategoria(e.target.value)} sx={{ mb: 2 }} />
+          <Button variant="contained" sx={{ backgroundColor: "#4caf50", width: "100%" }} onClick={editarProducto} disabled={loading}>
             {loading ? <CircularProgress size={24} /> : "Actualizar Producto"}
+          </Button>
+        </Box>
+      </Modal>
+
+      {/* 🆕 Modal para agregar producto */}
+      <Modal open={openCrearModal} onClose={() => setOpenCrearModal(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "white",
+            padding: 4,
+            borderRadius: 2,
+            boxShadow: 24,
+            width: 400,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Agregar Producto
+          </Typography>
+          <TextField label="Nombre" fullWidth value={nuevoProducto.nombre} onChange={(e) => setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })} sx={{ mb: 2 }} />
+          <TextField label="Precio" type="number" fullWidth value={nuevoProducto.precio} onChange={(e) => setNuevoProducto({ ...nuevoProducto, precio: e.target.value })} sx={{ mb: 2 }} />
+          <TextField label="Stock" type="number" fullWidth value={nuevoProducto.stock} onChange={(e) => setNuevoProducto({ ...nuevoProducto, stock: e.target.value })} sx={{ mb: 2 }} />
+          <TextField label="Categoría" fullWidth value={nuevoProducto.categoria} onChange={(e) => setNuevoProducto({ ...nuevoProducto, categoria: e.target.value })} sx={{ mb: 2 }} />
+          <Button variant="contained" sx={{ backgroundColor: "#1976d2", width: "100%" }} onClick={agregarProducto} disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : "Agregar Producto"}
           </Button>
         </Box>
       </Modal>
