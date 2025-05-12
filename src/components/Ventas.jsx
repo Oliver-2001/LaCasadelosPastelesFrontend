@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  Typography, CircularProgress
+  Typography, CircularProgress, Box, List, ListItem, ListItemText
 } from '@mui/material';
 
 const Ventas = () => {
@@ -79,35 +79,59 @@ const Ventas = () => {
       </TableContainer>
 
       {/* Modal de Detalles */}
-      <Dialog open={modalOpen} onClose={cerrarModal} maxWidth="sm" fullWidth>
-        <DialogTitle>Detalles de Venta #{ventaSeleccionada?.id_venta}</DialogTitle>
-        <DialogContent>
-          {loading ? (
-            <CircularProgress />
-          ) : (
-            <>
-              <Typography>Fecha: {ventaSeleccionada?.fecha}</Typography>
-              <Typography>Total: Q{ventaSeleccionada?.total?.toFixed(2)}</Typography>
-              <Typography>ID Usuario: {ventaSeleccionada?.id_usuario}</Typography>
-              <Typography variant="h6" mt={2}>Productos:</Typography>
-              {detalles.length > 0 ? (
-                <ul>
-                  {detalles.map((item, index) => (
-                    <li key={index}>
-                      {item.nombre_producto} - Cant: {item.cantidad} - Subtotal: Q{item.subtotal.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <Typography>No hay productos.</Typography>
-              )}
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cerrarModal}>Cerrar</Button>
-        </DialogActions>
-      </Dialog>
+<Dialog open={modalOpen} onClose={cerrarModal} maxWidth="sm" fullWidth>
+  <DialogTitle sx={{ fontWeight: "bold", fontFamily: "'Poppins', sans-serif" }}>
+    Detalles de Venta #{ventaSeleccionada?.id_venta}
+  </DialogTitle>
+
+  <DialogContent dividers>
+    {loading ? (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={100}>
+        <CircularProgress />
+      </Box>
+    ) : (
+      <Box sx={{ fontFamily: "'Poppins', sans-serif" }}>
+        <Box mb={2}>
+          <Typography variant="body1"><strong>Fecha:</strong> {ventaSeleccionada?.fecha}</Typography>
+          <Typography variant="body1"><strong>Total:</strong> Q{ventaSeleccionada?.total?.toFixed(2)}</Typography>
+          <Typography variant="body1"><strong>ID Usuario:</strong> {ventaSeleccionada?.id_usuario}</Typography>
+        </Box>
+
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>Productos:</Typography>
+
+        {detalles.length > 0 ? (
+          <List dense>
+            {detalles.map((item, index) => (
+              <ListItem key={index} disablePadding sx={{ mb: 1 }}>
+                <ListItemText
+                  primary={
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {item.nombre_producto}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="body2">
+                      Cantidad: {item.cantidad} &nbsp;&nbsp;|&nbsp;&nbsp;
+                      Subtotal: Q{item.subtotal.toFixed(2)}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        ) : (
+          <Typography variant="body2" color="text.secondary">No hay productos.</Typography>
+        )}
+      </Box>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={cerrarModal} variant="contained" color="secondary">
+      Cerrar
+    </Button>
+  </DialogActions>
+</Dialog>
     </div>
   );
 };
