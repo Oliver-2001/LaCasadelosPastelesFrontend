@@ -7,6 +7,7 @@ import Dashboard from "./components/Dashboard";
 import Usuarios from "./components/Usuarios";
 import Productos from "./components/Productos";
 import Inventario from "./components/Inventario";
+import Ventas from "./components/Ventas";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
@@ -62,6 +63,10 @@ function App() {
               path="/inventario"
               element={isAuthenticated ? <Inventario /> : <Navigate to="/login" />}
             />
+            <Route
+              path="/ventas"
+              element={isAuthenticated ? <Ventas /> : <Navigate to="/login" />}
+/>
           </Routes>
         </div>
       </div>
