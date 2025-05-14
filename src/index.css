@@ -11,3 +11,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Para que se vea bien el mapa */
+.leaflet-container {
+  height: 400px;
+  width: 100%;
+  border-radius: 16px;
+  margin-top: 1rem;
+}

@@ -1,138 +1,198 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  Typography, CircularProgress, Box, List, ListItem, ListItemText
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  TextField,
+  Button,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Paper,
 } from '@mui/material';
 
 const Ventas = () => {
-  const [ventas, setVentas] = useState([]);
-  const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
-  const [detalles, setDetalles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [productos, setProductos] = useState([]);
+  const [productoSeleccionado, setProductoSeleccionado] = useState('');
+  const [cantidad, setCantidad] = useState(1);
+  const [detallesVenta, setDetallesVenta] = useState([]);
+  const [total, setTotal] = useState(0);
+
+  // ⚙️ Simulamos ID de usuario 1 (ajusta según autenticación real)
+  const id_usuario = 1;
 
   useEffect(() => {
-    obtenerVentas();
+    obtenerProductos();
   }, []);
 
-  const obtenerVentas = async () => {
+  const obtenerProductos = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/ventas'); // Ajusta si usas un puerto diferente
-      setVentas(res.data);
+      const res = await axios.get('http://localhost:5000/productos');
+      setProductos(res.data);
     } catch (error) {
-      console.error('Error al obtener ventas', error);
+      console.error('Error al obtener productos:', error);
     }
   };
 
-  const abrirModalDetalles = async (venta) => {
-    setVentaSeleccionada(venta);
-    setModalOpen(true);
-    setLoading(true);
-    try {
-      const res = await axios.get(`http://localhost:5000/ventas/${venta.id_venta}`);
-      setDetalles(res.data.detalles || []);
-    } catch (error) {
-      console.error('Error al obtener detalles', error);
-    } finally {
-      setLoading(false);
-    }
+  const agregarProducto = () => {
+    if (!productoSeleccionado || cantidad <= 0) return;
+
+    const producto = productos.find(p => p.id_producto === productoSeleccionado);
+    if (!producto) return;
+
+    const subtotal = producto.precio * cantidad;
+
+    setDetallesVenta(prev => [
+      ...prev,
+      {
+        id_producto: producto.id_producto,
+        nombre: producto.nombre,
+        cantidad,
+        precio: producto.precio,
+        subtotal,
+      },
+    ]);
+
+    setTotal(prev => prev + subtotal);
+    setProductoSeleccionado('');
+    setCantidad(1);
   };
 
-  const cerrarModal = () => {
-    setModalOpen(false);
-    setDetalles([]);
-    setVentaSeleccionada(null);
+  const eliminarItem = (index) => {
+    const item = detallesVenta[index];
+    setTotal(prev => prev - item.subtotal);
+    setDetallesVenta(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const registrarVenta = async () => {
+    if (detallesVenta.length === 0) return;
+
+    const detalles = detallesVenta.map(item => ({
+      id_producto: item.id_producto,
+      cantidad: item.cantidad,
+    }));
+
+    try {
+      const res = await axios.post('http://localhost:5000/ventas', {
+        id_usuario,
+        detalles,
+      });
+
+      alert(`Venta registrada exitosamente con ID: ${res.data.id_venta}`);
+      setDetallesVenta([]);
+      setTotal(0);
+    } catch (error) {
+      console.error('Error al registrar venta:', error);
+      alert('Error al registrar la venta.');
+    }
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Typography variant="h4" gutterBottom>Listado de Ventas</Typography>
-      <TableContainer component={Paper} sx={{ border: '2px solidrgb(74, 34, 255)' }}>
+    <Box p={3}>
+      <Typography variant="h4" mb={2}>
+        Nueva Venta
+      </Typography>
+
+      <FormControl fullWidth margin="normal">
+        <InputLabel id="producto-label">Producto</InputLabel>
+        <Select
+          labelId="producto-label"
+          value={productoSeleccionado}
+          onChange={(e) => setProductoSeleccionado(e.target.value)}
+          label="Producto"
+        >
+          <MenuItem value="">
+            <em>Seleccionar producto</em>
+          </MenuItem>
+          {productos.map((producto) => (
+            <MenuItem key={producto.id_producto} value={producto.id_producto}>
+              {producto.nombre} - Q{producto.precio}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <TextField
+        type="number"
+        label="Cantidad"
+        value={cantidad}
+        onChange={(e) => setCantidad(parseInt(e.target.value))}
+        fullWidth
+        margin="normal"
+        inputProps={{ min: 1 }}
+      />
+
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        onClick={agregarProducto}
+        sx={{ mt: 1 }}
+      >
+        Agregar Producto
+      </Button>
+
+      <Paper sx={{ mt: 4 }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#ff9800' }}>
+          <TableHead>
             <TableRow>
-              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>ID Venta</TableCell>
-              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Fecha</TableCell>
-              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Total</TableCell>
-              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>ID Usuario</TableCell>
-              <TableCell style={{ fontWeight: 'bold', color: '#fff' }}>Acciones</TableCell>
+              <TableCell>Producto</TableCell>
+              <TableCell>Cantidad</TableCell>
+              <TableCell>Precio</TableCell>
+              <TableCell>Subtotal</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {ventas.map((venta) => (
-              <TableRow key={venta.id_venta}>
-                <TableCell>{venta.id_venta}</TableCell>
-                <TableCell>{venta.fecha}</TableCell>
-                <TableCell>Q{venta.total.toFixed(2)}</TableCell>
-                <TableCell>{venta.id_usuario}</TableCell>
+            {detallesVenta.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>{item.nombre}</TableCell>
+                <TableCell>{item.cantidad}</TableCell>
+                <TableCell>Q{item.precio.toFixed(2)}</TableCell>
+                <TableCell>Q{item.subtotal.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Button variant="contained" sx={{ my: 2, backgroundColor: '#FF5722' }} onClick={() => abrirModalDetalles(venta)}>
-                    Ver Detalles
+                  <Button
+                    color="error"
+                    onClick={() => eliminarItem(index)}
+                    size="small"
+                  >
+                    Eliminar
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
+            {detallesVenta.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No hay productos agregados.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
-      </TableContainer>
+      </Paper>
 
-      {/* Modal de Detalles */}
-<Dialog open={modalOpen} onClose={cerrarModal} maxWidth="sm" fullWidth>
-  <DialogTitle sx={{ fontWeight: "bold", fontFamily: "'Poppins', sans-serif" }}>
-    Detalles de Venta #{ventaSeleccionada?.id_venta}
-  </DialogTitle>
+      <Typography variant="h6" mt={3}>
+        Total: Q{total.toFixed(2)}
+      </Typography>
 
-  <DialogContent dividers>
-    {loading ? (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={100}>
-        <CircularProgress />
-      </Box>
-    ) : (
-      <Box sx={{ fontFamily: "'Poppins', sans-serif" }}>
-        <Box mb={2}>
-          <Typography variant="body1"><strong>Fecha:</strong> {ventaSeleccionada?.fecha}</Typography>
-          <Typography variant="body1"><strong>Total:</strong> Q{ventaSeleccionada?.total?.toFixed(2)}</Typography>
-          <Typography variant="body1"><strong>ID Usuario:</strong> {ventaSeleccionada?.id_usuario}</Typography>
-        </Box>
-
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>Productos:</Typography>
-
-        {detalles.length > 0 ? (
-          <List dense>
-            {detalles.map((item, index) => (
-              <ListItem key={index} disablePadding sx={{ mb: 1 }}>
-                <ListItemText
-                  primary={
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {item.nombre_producto}
-                    </Typography>
-                  }
-                  secondary={
-                    <Typography variant="body2">
-                      Cantidad: {item.cantidad} &nbsp;&nbsp;|&nbsp;&nbsp;
-                      Subtotal: Q{item.subtotal.toFixed(2)}
-                    </Typography>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography variant="body2" color="text.secondary">No hay productos.</Typography>
-        )}
-      </Box>
-    )}
-  </DialogContent>
-
-  <DialogActions>
-    <Button onClick={cerrarModal} variant="contained" color="secondary">
-      Cerrar
-    </Button>
-  </DialogActions>
-</Dialog>
-    </div>
+      <Button
+        variant="contained"
+        color="success"
+        fullWidth
+        onClick={registrarVenta}
+        sx={{ mt: 2 }}
+        disabled={detallesVenta.length === 0}
+      >
+        Registrar Venta
+      </Button>
+    </Box>
   );
 };
 
