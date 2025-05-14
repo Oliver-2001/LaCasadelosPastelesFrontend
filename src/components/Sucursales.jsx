@@ -37,6 +37,18 @@ const Sucursales = () => {
     }
   };
 
+  const eliminarSucursal = async (id_sucursal) => {
+  const confirmar = window.confirm('¿Estás seguro de que deseas eliminar esta sucursal?');
+  if (!confirmar) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/sucursales/${id_sucursal}`);
+    obtenerSucursales(); // Actualiza la lista
+  } catch (error) {
+    console.error('Error al eliminar sucursal:', error);
+  }
+};
+
   return (
     <div style={contenedorEstilo}>
       <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '20px' }}>Sucursales</h2>
@@ -51,6 +63,7 @@ const Sucursales = () => {
             <th style={thEstilo}>Dirección</th>
             <th style={thEstilo}>Latitud</th>
             <th style={thEstilo}>Longitud</th>
+            <th style={thEstilo}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -60,6 +73,11 @@ const Sucursales = () => {
               <td style={tdEstilo}>{sucursal.direccion}</td>
               <td style={tdEstilo}>{sucursal.latitud}</td>
               <td style={tdEstilo}>{sucursal.longitud}</td>
+              <td style={tdEstilo}>
+              <button onClick={() => eliminarSucursal(sucursal.id_sucursal)} style={botonEliminar}>
+              Eliminar
+              </button>
+            </td>
             </tr>
           ))}
         </tbody>
@@ -164,7 +182,7 @@ const botonEstilo = {
   borderRadius: '6px',
   cursor: 'pointer',
   fontSize: '16px',
-  transition: 'background-color 0.3s',
+  transition: 'background-color 0.4s',
 };
 
 const botonGuardar = {
@@ -176,6 +194,17 @@ const botonGuardar = {
 const botonCancelar = {
   ...botonEstilo,
   backgroundColor: '#dc3545', // rojo para cancelar
+};
+
+const botonEliminar = {
+  backgroundColor: '#dc3545',
+  color: 'white',
+  border: 'none',
+  padding: '8px 12px',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  fontSize: '14px',
+  transition: 'background-color 0.3s',
 };
 
 export default Sucursales;
