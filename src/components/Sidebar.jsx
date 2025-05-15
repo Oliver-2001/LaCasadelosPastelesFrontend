@@ -106,6 +106,31 @@ const Sidebar = ({ onLogout }) => {
         <Divider sx={{ backgroundColor: "white", marginBottom: 2 }} />
 
         <List>
+                <ListItemButton
+          component={Link}
+          to="/dashboard"
+          sx={{
+          borderRadius: 3,
+          marginY: 1,
+          paddingY: 1.5,
+          transition: "0.3s",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          "&:hover": { backgroundColor: "rgba(255,255,255,0.2)" },
+          }}
+        >
+  <ListItemIcon sx={{ color: "white" }}>
+    <Home />
+  </ListItemIcon>
+  <ListItemText
+    primary="Inicio"
+    sx={{
+      color: "white",
+      fontFamily: "'Poppins', sans-serif",
+      fontWeight: "bold",
+    }}
+  />
+</ListItemButton>
+    
           {/* Módulos obtenidos desde la API */}
           {modulos.length > 0 ? (
             modulos.map((modulo) => (
