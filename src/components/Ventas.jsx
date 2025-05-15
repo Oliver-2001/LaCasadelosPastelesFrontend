@@ -33,11 +33,16 @@ const Ventas = () => {
 
   const obtenerProductos = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/productos');
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:5000/productos', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setProductos(res.data);
-    } catch (error) {
-      console.error('Error al obtener productos:', error);
-    }
+    }  catch (error) {
+      console.error('Error al obtener productos:', error.response?.status, error.response?.data);
+    } 
   };
 
   const agregarProducto = () => {
