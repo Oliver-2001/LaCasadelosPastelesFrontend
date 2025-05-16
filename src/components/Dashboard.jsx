@@ -1,10 +1,13 @@
 import React from "react";
+import Inicio from "./Inicio";
 
 const Dashboard = () => {
   return (
     <div>
-      <h1>¡Bienvenido al Dashboard!</h1>
-      <p>Esta es la pantalla principal del sistema.</p>
+      <hr />
+
+      {/* Aquí cargamos las gráficas */}
+      <Inicio />
     </div>
   );
 };

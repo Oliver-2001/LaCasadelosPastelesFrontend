@@ -83,6 +83,7 @@ function App() {
               element={isAuthenticated ? <PrediccionesIA /> : <Navigate to="/login" />}
             />
             
+            
           </Routes>
         </div>
       </div>
