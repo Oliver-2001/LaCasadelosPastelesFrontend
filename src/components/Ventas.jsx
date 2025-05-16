@@ -23,8 +23,9 @@ const Ventas = () => {
   const [cantidad, setCantidad] = useState(1);
   const [detallesVenta, setDetallesVenta] = useState([]);
   const [total, setTotal] = useState(0);
+  const [errorStock, setErrorStock] = useState('');
 
-  // ⚙️ Simulamos ID de usuario 1 (ajusta según autenticación real)
+  // Simulamos ID de usuario 1 (ajusta según autenticación real)
   const id_usuario = 1;
 
   useEffect(() => {
@@ -40,9 +41,9 @@ const Ventas = () => {
         },
       });
       setProductos(res.data);
-    }  catch (error) {
+    } catch (error) {
       console.error('Error al obtener productos:', error.response?.status, error.response?.data);
-    } 
+    }
   };
 
   const agregarProducto = () => {
@@ -50,6 +51,16 @@ const Ventas = () => {
 
     const producto = productos.find(p => p.id_producto === productoSeleccionado);
     if (!producto) return;
+
+    // Cantidad total ya agregada de este producto en el carrito
+    const cantidadEnCarrito = detallesVenta
+      .filter(item => item.id_producto === productoSeleccionado)
+      .reduce((acc, item) => acc + item.cantidad, 0);
+
+    if (cantidad + cantidadEnCarrito > producto.stock) {
+      setErrorStock(`Stock insuficiente. Solo quedan ${producto.stock - cantidadEnCarrito} unidades disponibles.`);
+      return;
+    }
 
     const subtotal = producto.precio * cantidad;
 
@@ -67,12 +78,41 @@ const Ventas = () => {
     setTotal(prev => prev + subtotal);
     setProductoSeleccionado('');
     setCantidad(1);
+    setErrorStock('');
+  };
+
+  // Actualizar cantidad y validar que no sea mayor al stock disponible
+  const handleCantidadChange = (e) => {
+    let valor = parseInt(e.target.value);
+    if (isNaN(valor) || valor < 1) valor = 1;
+
+    if (productoSeleccionado) {
+      const producto = productos.find(p => p.id_producto === productoSeleccionado);
+      if (producto) {
+        // Cantidad total ya agregada en el carrito para este producto
+        const cantidadEnCarrito = detallesVenta
+          .filter(item => item.id_producto === productoSeleccionado)
+          .reduce((acc, item) => acc + item.cantidad, 0);
+
+        const maxCantidad = producto.stock - cantidadEnCarrito;
+
+        if (valor > maxCantidad) {
+          valor = maxCantidad > 0 ? maxCantidad : 1; // mínimo 1 si hay stock, si no 1 igual
+          setErrorStock(`Stock insuficiente. Solo quedan ${maxCantidad} unidades disponibles.`);
+        } else {
+          setErrorStock('');
+        }
+      }
+    }
+
+    setCantidad(valor);
   };
 
   const eliminarItem = (index) => {
     const item = detallesVenta[index];
     setTotal(prev => prev - item.subtotal);
     setDetallesVenta(prev => prev.filter((_, i) => i !== index));
+    setErrorStock('');
   };
 
   const registrarVenta = async () => {
@@ -92,6 +132,7 @@ const Ventas = () => {
       alert(`Venta registrada exitosamente con ID: ${res.data.id_venta}`);
       setDetallesVenta([]);
       setTotal(0);
+      setErrorStock('');
     } catch (error) {
       console.error('Error al registrar venta:', error);
       alert('Error al registrar la venta.');
@@ -109,7 +150,11 @@ const Ventas = () => {
         <Select
           labelId="producto-label"
           value={productoSeleccionado}
-          onChange={(e) => setProductoSeleccionado(e.target.value)}
+          onChange={(e) => {
+            setProductoSeleccionado(e.target.value);
+            setCantidad(1);
+            setErrorStock('');
+          }}
           label="Producto"
         >
           <MenuItem value="">
@@ -117,7 +162,7 @@ const Ventas = () => {
           </MenuItem>
           {productos.map((producto) => (
             <MenuItem key={producto.id_producto} value={producto.id_producto}>
-              {producto.nombre} - Q{producto.precio}
+              {producto.nombre} - Q{producto.precio} - Stock: {producto.stock}
             </MenuItem>
           ))}
         </Select>
@@ -127,10 +172,11 @@ const Ventas = () => {
         type="number"
         label="Cantidad"
         value={cantidad}
-        onChange={(e) => setCantidad(parseInt(e.target.value))}
+        onChange={handleCantidadChange}
         fullWidth
         margin="normal"
         inputProps={{ min: 1 }}
+        disabled={!productoSeleccionado}
       />
 
       <Button
@@ -139,9 +185,16 @@ const Ventas = () => {
         fullWidth
         onClick={agregarProducto}
         sx={{ mt: 1 }}
+        disabled={!productoSeleccionado}
       >
         Agregar Producto
       </Button>
+
+      {errorStock && (
+        <Typography color="error" mt={1}>
+          {errorStock}
+        </Typography>
+      )}
 
       <Paper sx={{ mt: 4 }}>
         <Table>
