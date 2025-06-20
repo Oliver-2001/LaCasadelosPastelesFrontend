@@ -25,8 +25,6 @@ const Ventas = () => {
   const [total, setTotal] = useState(0);
   const [errorStock, setErrorStock] = useState('');
 
-  // Simulamos ID de usuario 1 (ajusta según autenticación real)
-  const id_usuario = 1;
 
   useEffect(() => {
     obtenerProductos();
@@ -115,29 +113,60 @@ const Ventas = () => {
     setErrorStock('');
   };
 
-  const registrarVenta = async () => {
-    if (detallesVenta.length === 0) return;
+const registrarVenta = async () => {
+  if (detallesVenta.length === 0) return;
 
-    const detalles = detallesVenta.map(item => ({
-      id_producto: item.id_producto,
-      cantidad: item.cantidad,
-    }));
+  const detalles = detallesVenta.map(item => ({
+    id_producto: item.id_producto,
+    cantidad: item.cantidad,
+  }));
 
-    try {
-      const res = await axios.post('http://localhost:5000/ventas', {
-        id_usuario,
-        detalles,
-      });
+  try {
+    const token = localStorage.getItem('token'); // obtener token guardado en login
 
-      alert(`Venta registrada exitosamente con ID: ${res.data.id_venta}`);
-      setDetallesVenta([]);
-      setTotal(0);
-      setErrorStock('');
-    } catch (error) {
-      console.error('Error al registrar venta:', error);
-      alert('Error al registrar la venta.');
+    const res = await axios.post(
+      'http://localhost:5000/ventas',
+      { detalles },  // SOLO detalles, no id_usuario
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // enviar token en header
+        }
+      }
+    );
+
+    alert(`Venta registrada exitosamente con ID: ${res.data.id_venta}`);
+
+    const quierePDF = window.confirm('¿Quieres descargar el reporte PDF de esta venta?');
+
+    if (quierePDF) {
+      const pdfRes = await axios.get(
+        `http://localhost:5000/ventas/${res.data.id_venta}/reporte-pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`  // también enviar token aquí
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `reporte_venta_${res.data.id_venta}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
-  };
+
+    // Limpiar carrito
+    setDetallesVenta([]);
+    setTotal(0);
+    setErrorStock('');
+  } catch (error) {
+    console.error('Error al registrar venta:', error);
+    alert('Error al registrar la venta.');
+  }
+};
 
   return (
     <Box p={3}>
