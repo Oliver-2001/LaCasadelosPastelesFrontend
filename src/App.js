@@ -11,6 +11,7 @@ import DetalleVentas from "./components/DetalleVentas";
 import Ventas from "./components/Ventas";
 import Sucursales from "./components/Sucursales";
 import PrediccionesIA from "./components/PrediccionesIA";
+import Reportes from "./components/Reportes";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
@@ -81,6 +82,10 @@ function App() {
             <Route
               path="/prediccionesia"
               element={isAuthenticated ? <PrediccionesIA /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/reportes"
+              element={isAuthenticated ? <Reportes /> : <Navigate to="/login" />}
             />
             
             
