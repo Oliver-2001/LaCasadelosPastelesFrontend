@@ -60,15 +60,49 @@ const Ventas = () => {
     return ventas.filter(v => moment(v.fecha).format('YYYY-MM-DD') === hoy);
   };
 
+  const descargarReporteDelDia = async () => {
+  try {
+    const token = localStorage.getItem("token"); 
+    const res = await axios.get("http://localhost:5000/reporte-ventas-dia", {
+      responseType: "blob",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const blob = new Blob([res.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "reporte_ventas_dia.pdf");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error("Error al descargar reporte:", error);
+    alert("No se pudo descargar el reporte.");
+  }
+};
+
+
   return (
     <div style={{ padding: '20px' }}>
       <Typography variant="h4" gutterBottom>Listado de Ventas</Typography>
 
-      <FormControlLabel
-        control={<Switch checked={filtroHoy} onChange={() => setFiltroHoy(!filtroHoy)} />}
-        label="Mostrar solo ventas del día"
-        sx={{ mb: 2 }}
-      />
+       <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <FormControlLabel
+            control={<Switch checked={filtroHoy} onChange={() => setFiltroHoy(!filtroHoy)} />}
+            label="Mostrar solo ventas del día"
+        />
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={descargarReporteDelDia}
+            sx={{ borderRadius: 2 }}
+          >
+          Descargar Ventas del Día (PDF)
+          </Button>
+        </Box>
 
       <TableContainer component={Paper} sx={{ border: '2px solidrgb(238, 127, 0)' }}>
         <Table>
