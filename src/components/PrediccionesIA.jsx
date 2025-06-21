@@ -34,6 +34,20 @@ const PrediccionesIA = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState("");
   const [productosUnicos, setProductosUnicos] = useState([]);
 
+
+  const handleGenerarPredicciones = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.post("http://localhost:5000/generar_predicciones");
+    console.log("Respuesta:", response.data.mensaje);
+    await fetchPredicciones(); // Actualiza la vista después de generar
+  } catch (error) {
+    console.error("Error al generar predicciones:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
   // Obtener datos de la API
   const fetchPredicciones = useCallback(async () => {
     setLoading(true);
@@ -61,9 +75,18 @@ const PrediccionesIA = () => {
   }, [fetchPredicciones]);
 
   // Filtrar datos para el producto seleccionado
-  const datosFiltrados = predicciones.filter(
-    (p) => p.nombre_producto === productoSeleccionado
-  );
+const datosFiltrados = predicciones
+  .filter((p) => {
+    const hoy = new Date();
+    const fechaPred = new Date(p.fecha_prediccion);
+    const diferenciaDias = (fechaPred - hoy) / (1000 * 60 * 60 * 24);
+    return (
+      p.nombre_producto === productoSeleccionado &&
+      diferenciaDias >= 0 &&
+      diferenciaDias < 7
+    );
+  })
+  .sort((a, b) => new Date(a.fecha_prediccion) - new Date(b.fecha_prediccion));
 
   // Manejar cambio en el select
   const handleProductoChange = (event) => {
@@ -109,6 +132,15 @@ const PrediccionesIA = () => {
           ))}
         </Select>
       </FormControl>
+
+      <Button
+        variant="contained"
+        color="success"
+        onClick={handleGenerarPredicciones}
+        sx={{ ml: 2 }}
+      >
+        Hacer las predicciones para esta semana
+      </Button>
 
       {/* Botón actualizar */}
       <Button variant="contained" onClick={fetchPredicciones} sx={{ ml: 2 }}>
